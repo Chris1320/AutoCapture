@@ -1,10 +1,8 @@
+from __future__ import annotations
+
 import sys
 
-
-def main() -> int:
-    print("AutoCapture")
-    return 0
-
+from .app import main
 
 if __name__ == "__main__":
     sys.exit(main())

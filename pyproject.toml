@@ -3,8 +3,17 @@ name = "autocapture"
 version = "0.1.0"
 description = "Simplify picture-taking and keeping track of your subjects' details."
 readme = "README.md"
-requires-python = ">=3.14"
-dependencies = ["fastexcel>=0.19.0", "loguru>=0.7.3", "polars>=1.39.3", "pyside6>=6.11.0"]
+requires-python = ">=3.12"
+dependencies = [
+    "fastexcel>=0.19.0",
+    "loguru>=0.7.3",
+    "numpy>=2.0.0",
+    "opencv-python-headless>=4.11.0.86",
+    "polars>=1.39.3",
+    "pyside6>=6.11.0",
+    "xlsxwriter>=3.2.5",
+    "pywin32>=308; platform_system == 'Windows'",
+]
 
 [dependency-groups]
 dev = ["black>=26.3.1", "isort>=8.0.1", "nuitka>=4.0.7", "pylint>=4.0.5", "pytest>=9.0.2", "pytest-cov>=7.1.0"]
