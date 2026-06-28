@@ -5,22 +5,23 @@ from pathlib import Path
 from typing import cast
 
 from loguru import logger
+from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
 
 from .camera import CameraService
-from .config import app_logs_dir, load_config
+from .config import AppConfig, app_logs_dir, load_config
 from .data import CaptureTableModel
-from .logging_setup import configure_logging
+from .logging import configure_logging
 from .storage import CaptureStorage
 from .ui import MainWindow, OutputRootDialog
 
 
-def build_application() -> QApplication:
-    application = QApplication.instance()
+def build_application() -> QCoreApplication:
+    application: QCoreApplication | None = QApplication.instance()
     if application is not None:
         return cast(QApplication, application)
 
-    qt_application = QApplication(sys.argv)
+    qt_application: QApplication = QApplication(sys.argv)
     qt_application.setApplicationName("AutoCapture")
     qt_application.setOrganizationName("AutoCapture")
     qt_application.setStyle("Fusion")
@@ -36,21 +37,21 @@ def choose_output_root() -> Path | None:
 
 
 def main() -> int:
-    application = build_application()
-    selected_root = choose_output_root()
+    application: QCoreApplication = build_application()
+    selected_root: Path | None = choose_output_root()
     if selected_root is None:
         return 0
 
-    config = load_config(selected_root)
-    storage = CaptureStorage(config.output_root)
+    config: AppConfig = load_config(selected_root)
+    storage: CaptureStorage = CaptureStorage(config.output_root)
     storage.ensure_layout()
     configure_logging(app_logs_dir())
 
     logger.info("Starting AutoCapture")
 
-    model = CaptureTableModel()
-    camera_service = CameraService(config)
-    window = MainWindow(config, storage, camera_service, model)
+    model: CaptureTableModel = CaptureTableModel()
+    camera_service: CameraService = CameraService(config)
+    window: MainWindow = MainWindow(config, storage, camera_service, model)
     window.show()
 
     return application.exec()

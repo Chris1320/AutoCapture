@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .base import CaptureFailedError, CaptureResult, CameraError, CameraUnavailableError
+from .base import CameraError, CameraUnavailableError, CaptureFailedError, CaptureResult
 from .preview import OpenCvPreviewThread
 from .service import CameraService
 from .webcam import WebcamCaptureSource

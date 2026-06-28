@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import polars as pl
-
 from autocapture.data.model import REQUIRED_COLUMN, CaptureTableModel
 
 
@@ -12,15 +10,19 @@ def test_required_column_is_present_and_fixed() -> None:
 
     try:
         model.rename_column(REQUIRED_COLUMN, "other")
+
     except ValueError as exc:
         assert REQUIRED_COLUMN in str(exc)
+
     else:
         raise AssertionError("expected rename to fail")
 
     try:
         model.remove_column(REQUIRED_COLUMN)
+
     except ValueError as exc:
         assert REQUIRED_COLUMN in str(exc)
+
     else:
         raise AssertionError("expected removal to fail")
 

@@ -14,32 +14,36 @@ class WebcamCaptureSource:
 
     def capture(self, destination: Path, latest_frame: object | None = None) -> Path:
         try:
-            import cv2
+            import cv2  # pylint: disable=import-outside-toplevel
+
         except ImportError as exc:  # pragma: no cover - runtime dependency guard
             raise CaptureFailedError(
                 "OpenCV is not available for webcam capture"
             ) from exc
 
         destination.parent.mkdir(parents=True, exist_ok=True)
-        frame = latest_frame
+        frame: object | None = latest_frame
 
         if frame is None:
-            backend = getattr(cv2, "CAP_DSHOW", 0)
+            backend: int = getattr(cv2, "CAP_DSHOW", 0)
             cv2_any: Any = cv2
-            capture = getattr(cv2_any, "VideoCapture")(self._device_index, backend)
+            capture: Any = getattr(cv2_any, "VideoCapture")(self._device_index, backend)
             if not capture.isOpened():
                 capture.release()
                 raise CaptureFailedError(
                     f"Unable to open webcam device {self._device_index}"
                 )
+
             try:
                 for _ in range(3):
                     capture.read()
+
                 success, frame = capture.read()
                 if not success:
                     raise CaptureFailedError(
                         f"Unable to read frame from webcam device {self._device_index}"
                     )
+
             finally:
                 capture.release()
 

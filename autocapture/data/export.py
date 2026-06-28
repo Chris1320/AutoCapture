@@ -12,31 +12,37 @@ def _relative_image_path(image_path: str, base_dir: Path) -> str:
     if not image_path:
         return image_path
 
-    path = Path(image_path)
+    path: Path = Path(image_path)
     if not path.is_absolute():
         return image_path
 
     try:
         return os.path.relpath(path, start=base_dir)
+
     except ValueError:
         return image_path
 
 
 def _ordered_frame(frame: pl.DataFrame) -> pl.DataFrame:
-    columns = list(frame.columns)
+    columns: list[str] = list(frame.columns)
     if REQUIRED_COLUMN in columns:
-        ordered_columns = [REQUIRED_COLUMN] + [
+        ordered_columns: list[str] = [REQUIRED_COLUMN] + [
             column for column in columns if column != REQUIRED_COLUMN
         ]
+
     else:
         ordered_columns = [REQUIRED_COLUMN] + columns
         frame = frame.with_columns(pl.lit("").alias(REQUIRED_COLUMN))
+
     if not ordered_columns:
         return frame
+
     return frame.select(ordered_columns)
 
 
-def _frame_relative_to_destination(frame: pl.DataFrame, destination: Path) -> pl.DataFrame:
+def _frame_relative_to_destination(
+    frame: pl.DataFrame, destination: Path
+) -> pl.DataFrame:
     return frame.with_columns(
         pl.col(REQUIRED_COLUMN)
         .cast(pl.Utf8)
@@ -49,11 +55,13 @@ def _frame_relative_to_destination(frame: pl.DataFrame, destination: Path) -> pl
 
 def export_capture_table(frame: pl.DataFrame, destination: Path) -> Path:
     destination.parent.mkdir(parents=True, exist_ok=True)
-    ordered = _frame_relative_to_destination(_ordered_frame(frame), destination)
+    ordered: pl.DataFrame = _frame_relative_to_destination(
+        _ordered_frame(frame), destination
+    )
 
     ordered.write_excel(
         workbook=destination,
-        worksheet="PSAutomater Import",
+        worksheet="Masterlist",
         table_style="Table Style Medium 2",
         include_header=True,
         autofilter=True,

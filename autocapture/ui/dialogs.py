@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+# UI custom dialogs.
 from ..data.model import REQUIRED_COLUMN
 
 
@@ -33,13 +34,13 @@ class ColumnNameDialog(QDialog):
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
-        self._name_edit = QLineEdit(initial_value)
+        self._name_edit: QLineEdit = QLineEdit(initial_value)
 
-        layout = QVBoxLayout(self)
+        layout: QVBoxLayout = QVBoxLayout(self)
         layout.addWidget(QLabel(prompt))
         layout.addWidget(self._name_edit)
 
-        button_box = QDialogButtonBox(
+        button_box: QDialogButtonBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
         button_box.accepted.connect(self._accept_if_valid)
@@ -52,6 +53,7 @@ class ColumnNameDialog(QDialog):
                 self, "Invalid column name", "Please enter a non-empty column name."
             )
             return
+
         self.accept()
 
     def value(self) -> str:
@@ -67,41 +69,41 @@ class OutputRootDialog(QDialog):
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle("Choose AutoCapture Folder")
-        self._parent_path = initial_parent or Path.home()
+        self._parent_path: Path = initial_parent or Path.home()
 
-        self._folder_name_edit = QLineEdit(initial_folder_name.strip())
-        self._parent_path_edit = QLineEdit(str(self._parent_path))
+        self._folder_name_edit: QLineEdit = QLineEdit(initial_folder_name.strip())
+        self._parent_path_edit: QLineEdit = QLineEdit(str(self._parent_path))
         self._parent_path_edit.setReadOnly(True)
 
-        layout = QVBoxLayout(self)
-        prompt = QLabel(
+        layout: QVBoxLayout = QVBoxLayout(self)
+        prompt: QLabel = QLabel(
             "Choose the parent folder and enter the name of the AutoCapture folder to create."
         )
         prompt.setWordWrap(True)
         layout.addWidget(prompt)
 
-        form = QFormLayout()
+        form: QFormLayout = QFormLayout()
         form.addRow("Folder name", self._folder_name_edit)
 
-        parent_row = QHBoxLayout()
+        parent_row: QHBoxLayout = QHBoxLayout()
         parent_row.addWidget(self._parent_path_edit, 1)
-        browse_button = QPushButton("Browse")
-        browse_button.clicked.connect(self._browse_for_parent_folder)
+        browse_button: QPushButton = QPushButton("Browse")
+        browse_button.clicked.connect(self.browse_for_parent_folder)
         parent_row.addWidget(browse_button)
-        parent_row_widget = QWidget()
+        parent_row_widget: QWidget = QWidget()
         parent_row_widget.setLayout(parent_row)
         form.addRow("Folder path", parent_row_widget)
         layout.addLayout(form)
 
-        button_box = QDialogButtonBox(
+        button_box: QDialogButtonBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
         button_box.accepted.connect(self._accept_if_valid)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
 
-    def _browse_for_parent_folder(self) -> None:
-        selected_parent = QFileDialog.getExistingDirectory(
+    def browse_for_parent_folder(self) -> None:
+        selected_parent: str = QFileDialog.getExistingDirectory(
             self,
             "Select where to create the AutoCapture folder",
             str(self._parent_path),
@@ -109,6 +111,9 @@ class OutputRootDialog(QDialog):
         if selected_parent:
             self._parent_path = Path(selected_parent)
             self._parent_path_edit.setText(selected_parent)
+
+    def set_folder_name(self, folder_name: str) -> None:
+        self._folder_name_edit.setText(folder_name.strip())
 
     def _accept_if_valid(self) -> None:
         if not self.folder_name():
@@ -118,6 +123,7 @@ class OutputRootDialog(QDialog):
                 "Please enter a non-empty folder name.",
             )
             return
+
         self.accept()
 
     def folder_name(self) -> str:
@@ -139,35 +145,41 @@ class RowEditorDialog(QDialog):
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
-        self._allow_retake = allow_retake
-        self._retake_requested = False
+        self._allow_retake: bool = allow_retake
+        self._retake_requested: bool = False
         self._editors: dict[str, QLineEdit] = {}
 
-        layout = QVBoxLayout(self)
-        subtitle = QLabel("Review the text fields below before saving the capture.")
+        layout: QVBoxLayout = QVBoxLayout(self)
+        subtitle: QLabel = QLabel(
+            "Review the text fields below before saving the capture."
+        )
         subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
 
-        form = QFormLayout()
+        form: QFormLayout = QFormLayout()
         for column in columns:
-            editor = QLineEdit()
+            editor: QLineEdit = QLineEdit()
             editor.setText("" if values is None else str(values.get(column, "")))
             if column == REQUIRED_COLUMN:
                 editor.setReadOnly(True)
                 editor.setPlaceholderText("Automatically generated after capture")
+
             self._editors[column] = editor
             form.addRow(self._pretty_label(column), editor)
+
         layout.addLayout(form)
 
-        button_box = QDialogButtonBox(
+        button_box: QDialogButtonBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel
         )
-        save_button = button_box.button(QDialogButtonBox.StandardButton.Save)
+        save_button: QPushButton = button_box.button(
+            QDialogButtonBox.StandardButton.Save
+        )
         save_button.setText("Save")
 
         if allow_retake:
-            retake_button = button_box.addButton(
+            retake_button: QPushButton = button_box.addButton(
                 "Retake Photo", QDialogButtonBox.ButtonRole.ActionRole
             )
             retake_button.clicked.connect(self._request_retake)
@@ -204,17 +216,16 @@ class CaptureReviewDialog(QDialog):
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle("Review Captured Photo")
-        self._retake_requested = False
+        self._retake_requested: bool = False
 
-        layout = QVBoxLayout(self)
+        layout: QVBoxLayout = QVBoxLayout(self)
         layout.setSpacing(12)
 
-        preview = QLabel()
+        preview: QLabel = QLabel()
         preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         preview.setMinimumSize(720, 420)
         preview.setWordWrap(True)
-        preview.setStyleSheet(
-            """
+        preview.setStyleSheet("""
             QLabel {
                 background: #101418;
                 color: #ced8e3;
@@ -222,12 +233,12 @@ class CaptureReviewDialog(QDialog):
                 border-radius: 14px;
                 padding: 12px;
             }
-            """
-        )
+            """)
 
-        pixmap = QPixmap(image_path)
+        pixmap: QPixmap = QPixmap(image_path)
         if pixmap.isNull():
             preview.setText(f"Unable to load captured image:\n{image_path}")
+
         else:
             preview.setPixmap(
                 pixmap.scaled(
@@ -237,21 +248,22 @@ class CaptureReviewDialog(QDialog):
                 )
             )
             preview.setScaledContents(False)
+
         layout.addWidget(preview, 1)
 
         if summary_lines:
-            summary = QLabel("\n".join(summary_lines))
+            summary: QLabel = QLabel("\n".join(summary_lines))
             summary.setWordWrap(True)
             layout.addWidget(summary)
 
-        button_box = QDialogButtonBox()
-        accept_button = button_box.addButton(
+        button_box: QDialogButtonBox = QDialogButtonBox()
+        accept_button: QPushButton = button_box.addButton(
             "Use Photo", QDialogButtonBox.ButtonRole.AcceptRole
         )
-        reject_button = button_box.addButton(
+        reject_button: QPushButton = button_box.addButton(
             "Retake Photo", QDialogButtonBox.ButtonRole.DestructiveRole
         )
-        cancel_button = button_box.addButton(
+        cancel_button: QPushButton = button_box.addButton(
             QDialogButtonBox.StandardButton.Cancel
         )
 
@@ -272,16 +284,18 @@ class RemoveConfirmationDialog(QDialog):
     def __init__(self, summary: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Remove Capture")
-        self._delete_file_checkbox = QCheckBox("Delete the image file from disk")
+        self._delete_file_checkbox: QCheckBox = QCheckBox(
+            "Delete the image file from disk"
+        )
         self._delete_file_checkbox.setChecked(False)
 
-        layout = QVBoxLayout(self)
-        label = QLabel(f"Remove this record?\n\n{summary}")
+        layout: QVBoxLayout = QVBoxLayout(self)
+        label: QLabel = QLabel(f"Remove this record?\n\n{summary}")
         label.setWordWrap(True)
         layout.addWidget(label)
         layout.addWidget(self._delete_file_checkbox)
 
-        button_box = QDialogButtonBox(
+        button_box: QDialogButtonBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No
         )
         button_box.button(QDialogButtonBox.StandardButton.Yes).setText("Remove")

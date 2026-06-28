@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
 from PySide6.QtCore import QPoint, Qt, Signal
@@ -71,27 +72,29 @@ class CaptureTableView(QTableView):
         )
 
     def selected_row(self) -> int | None:
-        indexes = self.selectionModel().selectedRows()
+        indexes: list[Any] = self.selectionModel().selectedRows()
         if not indexes:
             return None
+
         return indexes[0].row()
 
     def _show_header_menu(self, position: QPoint) -> None:
-        header = self.horizontalHeader()
-        section = header.logicalIndexAt(position)
-        menu = QMenu(self)
-        add_action = menu.addAction("Add text column")
-        rename_action = menu.addAction("Rename column")
-        remove_action = menu.addAction("Remove column")
-        chosen = menu.exec(header.mapToGlobal(position))
+        header: QHeaderView = self.horizontalHeader()
+        section: int = header.logicalIndexAt(position)
+        menu: QMenu = QMenu(self)
+        add_action: Any = menu.addAction("Add text column")
+        rename_action: Any = menu.addAction("Rename column")
+        remove_action: Any = menu.addAction("Remove column")
+        chosen: Any = menu.exec(header.mapToGlobal(position))
 
         if chosen == add_action:
             self.add_column_requested.emit()
             return
+
         if section < 0:
             return
 
-        model = self.model()
+        model: Any = self.model()
         column_name = str(
             model.headerData(
                 section, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole
@@ -99,10 +102,12 @@ class CaptureTableView(QTableView):
         )
         if chosen == rename_action:
             self.rename_column_requested.emit(column_name)
+
         elif chosen == remove_action:
             self.remove_column_requested.emit(column_name)
 
 
+# MainWindow class implementation.
 class MainWindow(QMainWindow):
     def __init__(
         self,
@@ -113,34 +118,34 @@ class MainWindow(QMainWindow):
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
-        self._config = config
-        self._storage = storage
-        self._camera_service = camera_service
-        self._model = table_model
+        self._config: AppConfig = config
+        self._storage: CaptureStorage = storage
+        self._camera_service: CameraService = camera_service
+        self._model: CaptureTableModel = table_model
         self._pending_capture: PendingCapture | None = None
-        self._busy = False
+        self._busy: bool = False
 
         self.setWindowTitle("AutoCapture")
         self.resize(1440, 900)
         self.setMinimumSize(1200, 760)
 
-        self._preview_widget = VideoPreviewWidget()
-        self._mode_combo = QComboBox()
+        self._preview_widget: VideoPreviewWidget = VideoPreviewWidget()
+        self._mode_combo: QComboBox = QComboBox()
         self._mode_combo.addItem(CameraMode.WEBCAM.label, CameraMode.WEBCAM)
         self._mode_combo.addItem(CameraMode.DSLR_WIA.label, CameraMode.DSLR_WIA)
         self._mode_combo.currentIndexChanged.connect(self._handle_mode_changed)
 
-        self._table_view = CaptureTableView()
+        self._table_view: CaptureTableView = CaptureTableView()
         self._table_view.setModel(self._model)
         self._table_view.add_column_requested.connect(self._add_column)
         self._table_view.rename_column_requested.connect(self._rename_column)
         self._table_view.remove_column_requested.connect(self._remove_column)
 
-        self._add_button = QPushButton("Add")
-        self._edit_button = QPushButton("Edit")
-        self._remove_button = QPushButton("Remove")
-        self._done_button = QPushButton("Done")
-        self._buttons = [
+        self._add_button: QPushButton = QPushButton("Add")
+        self._edit_button: QPushButton = QPushButton("Edit")
+        self._remove_button: QPushButton = QPushButton("Remove")
+        self._done_button: QPushButton = QPushButton("Done")
+        self._buttons: list[QPushButton] = [
             self._add_button,
             self._edit_button,
             self._remove_button,
@@ -151,8 +156,8 @@ class MainWindow(QMainWindow):
         self._remove_button.clicked.connect(self._remove_capture)
         self._done_button.clicked.connect(self._finish_and_export)
 
-        self._status_label = QLabel("Ready")
-        self._status_bar = QStatusBar()
+        self._status_label: QLabel = QLabel("Ready")
+        self._status_bar: QStatusBar = QStatusBar()
         self.setStatusBar(self._status_bar)
         self._status_bar.addPermanentWidget(self._status_label, 1)
 
@@ -165,37 +170,38 @@ class MainWindow(QMainWindow):
         self._camera_service.start_preview(self.current_mode())
 
     def current_mode(self) -> CameraMode:
-        data = self._mode_combo.currentData()
+        data: Any = self._mode_combo.currentData()
         if isinstance(data, CameraMode):
             return data
+
         return CameraMode(str(data))
 
     def _build_layout(self) -> None:
-        root = QWidget(self)
-        main_layout = QVBoxLayout(root)
+        root: QWidget = QWidget(self)
+        main_layout: QVBoxLayout = QVBoxLayout(root)
         main_layout.setContentsMargins(16, 16, 16, 16)
         main_layout.setSpacing(12)
 
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        left_panel = self._build_left_panel()
-        right_panel = self._build_right_panel()
+        splitter: QSplitter = QSplitter(Qt.Orientation.Horizontal)
+        left_panel: QWidget = self._build_left_panel()
+        right_panel: QWidget = self._build_right_panel()
         splitter.addWidget(left_panel)
         splitter.addWidget(right_panel)
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 2)
 
-        action_bar = self._build_action_bar()
+        action_bar: QWidget = self._build_action_bar()
         main_layout.addWidget(splitter, 1)
         main_layout.addWidget(action_bar, 0)
         self.setCentralWidget(root)
 
     def _build_left_panel(self) -> QWidget:
-        panel = QFrame()
+        panel: QFrame = QFrame()
         panel.setObjectName("card")
-        layout = QVBoxLayout(panel)
+        layout: QVBoxLayout = QVBoxLayout(panel)
         layout.setSpacing(12)
 
-        header_row = QHBoxLayout()
+        header_row: QHBoxLayout = QHBoxLayout()
         header_row.addWidget(QLabel("Camera Source"))
         header_row.addWidget(self._mode_combo, 1)
         layout.addLayout(header_row)
@@ -203,26 +209,27 @@ class MainWindow(QMainWindow):
         return panel
 
     def _build_right_panel(self) -> QWidget:
-        panel = QFrame()
+        panel: QFrame = QFrame()
         panel.setObjectName("card")
-        layout = QVBoxLayout(panel)
+        layout: QVBoxLayout = QVBoxLayout(panel)
         layout.setSpacing(12)
 
-        title = QLabel("Capture Data")
+        title: QLabel = QLabel("Capture Data")
         title.setObjectName("sectionTitle")
         layout.addWidget(title)
         layout.addWidget(self._table_view, 1)
         return panel
 
     def _build_action_bar(self) -> QWidget:
-        bar = QFrame()
+        bar: QFrame = QFrame()
         bar.setObjectName("actionBar")
-        layout = QHBoxLayout(bar)
+        layout: QHBoxLayout = QHBoxLayout(bar)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(12)
         for button in self._buttons:
             button.setMinimumHeight(42)
             layout.addWidget(button)
+
         layout.addStretch(1)
         return bar
 
@@ -295,17 +302,20 @@ class MainWindow(QMainWindow):
     def _handle_mode_changed(self, _index: int) -> None:
         if self._busy:
             return
+
         self._status_label.setText(f"Switching to {self.current_mode().label}")
         self._camera_service.start_preview(self.current_mode())
 
     def _add_column(self) -> None:
-        dialog = ColumnNameDialog(
+        dialog: ColumnNameDialog = ColumnNameDialog(
             "Add Column", "Enter the new text column name:", parent=self
         )
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
+
         try:
             self._model.add_column(dialog.value())
+
         except (IndexError, OSError, RuntimeError, ValueError) as exc:
             QMessageBox.warning(self, "Column error", str(exc))
 
@@ -315,13 +325,16 @@ class MainWindow(QMainWindow):
                 self, "Column error", f"{REQUIRED_COLUMN} cannot be renamed."
             )
             return
-        dialog = ColumnNameDialog(
+
+        dialog: ColumnNameDialog = ColumnNameDialog(
             "Rename Column", f"Rename '{column_name}' to:", column_name, self
         )
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
+
         try:
             self._model.rename_column(column_name, dialog.value())
+
         except (IndexError, OSError, RuntimeError, ValueError) as exc:
             QMessageBox.warning(self, "Column error", str(exc))
 
@@ -331,16 +344,19 @@ class MainWindow(QMainWindow):
                 self, "Column error", f"{REQUIRED_COLUMN} cannot be removed."
             )
             return
+
         try:
             self._model.remove_column(column_name)
+
         except (IndexError, OSError, RuntimeError, ValueError) as exc:
             QMessageBox.warning(self, "Column error", str(exc))
 
     def _add_capture(self) -> None:
         if self._busy:
             return
-        values = {column: "" for column in self._model.columns}
-        dialog = RowEditorDialog(
+
+        values: dict[str, str] = {column: "" for column in self._model.columns}
+        dialog: RowEditorDialog = RowEditorDialog(
             self._model.columns,
             values=values,
             allow_retake=False,
@@ -350,8 +366,8 @@ class MainWindow(QMainWindow):
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
-        edited_values = dialog.value_map()
-        destination = self._storage.build_image_path(
+        edited_values: dict[str, str] = dialog.value_map()
+        destination: Path = self._storage.build_image_path(
             extension=self._config.image_extension
         )
         self._pending_capture = PendingCapture("add", None, edited_values, destination)
@@ -361,20 +377,22 @@ class MainWindow(QMainWindow):
                 self, "Capture busy", "A capture is already in progress."
             )
             return
+
         self._set_busy(True, "Capturing new image...")
 
     def _edit_capture(self) -> None:
         if self._busy:
             return
-        row_index = self._selected_row_index()
+
+        row_index: int | None = self._selected_row_index()
         if row_index is None:
             QMessageBox.information(
                 self, "Select a row", "Please select a row to edit."
             )
             return
 
-        current_values = self._model.row_dict(row_index)
-        dialog = RowEditorDialog(
+        current_values: dict[str, str] = self._model.row_dict(row_index)
+        dialog: RowEditorDialog = RowEditorDialog(
             self._model.columns,
             values=current_values,
             allow_retake=True,
@@ -384,9 +402,9 @@ class MainWindow(QMainWindow):
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
-        updated_values = dialog.value_map()
+        updated_values: dict[str, str] = dialog.value_map()
         if dialog.retake_requested():
-            destination = Path(current_values[REQUIRED_COLUMN])
+            destination: Path = Path(current_values[REQUIRED_COLUMN])
             self._pending_capture = PendingCapture(
                 "edit", row_index, updated_values, destination
             )
@@ -398,6 +416,7 @@ class MainWindow(QMainWindow):
                     self, "Capture busy", "A capture is already in progress."
                 )
                 return
+
             self._set_busy(True, "Retaking image...")
             return
 
@@ -410,38 +429,46 @@ class MainWindow(QMainWindow):
                     if key != REQUIRED_COLUMN
                 },
             )
+
         except (IndexError, OSError, RuntimeError, ValueError) as exc:
             QMessageBox.warning(self, "Edit failed", str(exc))
 
     def _remove_capture(self) -> None:
         if self._busy:
             return
-        row_index = self._selected_row_index()
+
+        row_index: int | None = self._selected_row_index()
         if row_index is None:
             QMessageBox.information(
                 self, "Select a row", "Please select a row to remove."
             )
             return
 
-        row_values = self._model.row_dict(row_index)
-        dialog = RemoveConfirmationDialog(row_values.get(REQUIRED_COLUMN, ""), self)
+        row_values: dict[str, str] = self._model.row_dict(row_index)
+        dialog: RemoveConfirmationDialog = RemoveConfirmationDialog(
+            row_values.get(REQUIRED_COLUMN, ""), self
+        )
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
         if dialog.delete_file_requested():
             self._storage.delete_file(Path(row_values[REQUIRED_COLUMN]))
+
         try:
             self._model.remove_row(row_index)
+
         except (IndexError, OSError, RuntimeError, ValueError) as exc:
             QMessageBox.warning(self, "Remove failed", str(exc))
 
     def _finish_and_export(self) -> None:
         if self._busy:
             return
+
         try:
-            export_path = export_capture_table(
+            export_path: Path = export_capture_table(
                 self._model.frame, self._config.export_path
             )
+
         except (IndexError, OSError, RuntimeError, ValueError) as exc:
             logger.exception("Export failed")
             QMessageBox.warning(self, "Export failed", str(exc))
@@ -459,12 +486,12 @@ class MainWindow(QMainWindow):
             self._pending_capture = None
             return
 
-        pending = self._pending_capture
+        pending: PendingCapture | None = self._pending_capture
         if pending is None:
             return
 
         if pending.kind == "add":
-            review = CaptureReviewDialog(
+            review: CaptureReviewDialog = CaptureReviewDialog(
                 str(result.image_path),
                 summary_lines=[f"Image: {result.image_path}"]
                 + [f"{key}: {value}" for key, value in pending.values.items() if value],
@@ -484,28 +511,33 @@ class MainWindow(QMainWindow):
                         self, "Capture busy", "A capture is already in progress."
                     )
                     return
+
                 self._set_busy(True, "Retaking image...")
                 return
 
             self._pending_capture = None
-            row_data = dict(pending.values)
+            row_data: dict[str, str] = dict(pending.values)
             row_data[REQUIRED_COLUMN] = str(result.image_path)
             try:
                 self._model.insert_row(row_data)
+
             except (IndexError, OSError, RuntimeError, ValueError) as exc:
                 QMessageBox.warning(self, "Data update failed", str(exc))
+
             return
 
         self._pending_capture = None
 
-        row_data = dict(pending.values)
+        row_data: dict[str, str] = dict(pending.values)
         row_data[REQUIRED_COLUMN] = str(result.image_path)
 
         try:
             if pending.kind == "add":
                 self._model.insert_row(row_data)
+
             elif pending.kind == "edit" and pending.row_index is not None:
                 self._model.update_row(pending.row_index, row_data)
+
         except (IndexError, OSError, RuntimeError, ValueError) as exc:
             QMessageBox.warning(self, "Data update failed", str(exc))
 
@@ -521,6 +553,7 @@ class MainWindow(QMainWindow):
         self._busy = busy
         for button in self._buttons:
             button.setDisabled(busy)
+
         self._mode_combo.setDisabled(busy)
         self._status_label.setText(status)
 

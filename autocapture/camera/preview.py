@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from threading import Event, Lock
 import sys
+from threading import Event, Lock
 from typing import Any
 
 from loguru import logger
@@ -37,11 +37,12 @@ class OpenCvPreviewThread(QThread):
 
     def _open_capture(self) -> Any:
         try:
-            import cv2
+            import cv2  # pylint: disable=import-outside-toplevel
+
         except ImportError as exc:  # pragma: no cover - runtime dependency guard
             raise CameraUnavailableError("OpenCV is not available") from exc
 
-        backend = getattr(cv2, "CAP_DSHOW", 0) if sys.platform == "win32" else 0
+        backend: int = getattr(cv2, "CAP_DSHOW", 0) if sys.platform == "win32" else 0
         cv2_any: Any = cv2
         capture: Any = getattr(cv2_any, "VideoCapture")(self._device_index, backend)
         if not capture.isOpened():
@@ -56,7 +57,7 @@ class OpenCvPreviewThread(QThread):
         try:
             capture = self._open_capture()
             self.status_changed.emit(f"Preview started on device {self._device_index}")
-            frame_delay = max(1, int(1000 / self._preview_fps))
+            frame_delay: int = max(1, int(1000 / self._preview_fps))
 
             while not self._stop_event.is_set():
                 success, frame = capture.read()

@@ -30,16 +30,20 @@ class VideoPreviewWidget(QLabel):
             return
 
         try:
-            import cv2
+            import cv2  # pylint: disable=import-outside-toplevel
+
         except ModuleNotFoundError:
             return
 
         cv2_any: Any = cv2
-        rgb_frame = getattr(cv2_any, "cvtColor")(
+        rgb_frame: Any = getattr(cv2_any, "cvtColor")(
             frame, getattr(cv2_any, "COLOR_BGR2RGB")
         )
+        height: int
+        width: int
+        channels: int
         height, width, channels = rgb_frame.shape
-        image = QImage(
+        image: QImage = QImage(
             rgb_frame.data, width, height, channels * width, QImage.Format.Format_RGB888
         ).copy()
         self._current_pixmap = QPixmap.fromImage(image)
@@ -57,7 +61,8 @@ class VideoPreviewWidget(QLabel):
     def _apply_scaled_pixmap(self) -> None:
         if self._current_pixmap is None:
             return
-        scaled = self._current_pixmap.scaled(
+
+        scaled: QPixmap = self._current_pixmap.scaled(
             self.size(),
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation,

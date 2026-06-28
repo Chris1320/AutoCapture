@@ -26,7 +26,7 @@ class AppConfig:
     default_mode: CameraMode = CameraMode.WEBCAM
     preview_fps: int = 30
     image_extension: str = ".jpg"
-    export_filename: str = "PSAutomater_Import.xlsx"
+    export_filename: str = "Masterlist.xlsx"
     log_filename: str = "autocapture.log"
 
     @property
@@ -47,7 +47,7 @@ def app_logs_dir() -> Path:
 
 
 def default_output_root() -> Path | None:
-    override = os.getenv("AUTOCAPTURE_ROOT")
+    override: str | None = os.getenv("AUTOCAPTURE_ROOT")
     if override:
         return Path(override).expanduser()
     return None

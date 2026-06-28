@@ -31,13 +31,14 @@ class CaptureStorage:
             directory.mkdir(parents=True, exist_ok=True)
 
     def build_image_path(self, *, extension: str = ".jpg") -> Path:
-        stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        suffix = uuid4().hex[:8]
+        stamp: str = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        suffix: str = uuid4().hex[:8]
         return self.images_dir / f"capture_{stamp}_{suffix}{extension}"
 
     def write_frame(self, destination: Path, frame: object) -> Path:
         try:
-            import cv2
+            import cv2  # pylint: disable=import-outside-toplevel
+
         except ImportError as exc:  # pragma: no cover - runtime dependency guard
             raise CaptureFailedError(
                 "OpenCV is not available for saving image files"
@@ -47,10 +48,12 @@ class CaptureStorage:
         cv2_any: object = cv2
         if not getattr(cv2_any, "imwrite")(str(destination), frame):
             raise CaptureFailedError(f"Unable to write image file: {destination}")
+
         return destination
 
     def delete_file(self, path: Path) -> None:
         try:
             path.unlink(missing_ok=True)
+
         except OSError as exc:
             logger.warning("Unable to delete file {}: {}", path, exc)
