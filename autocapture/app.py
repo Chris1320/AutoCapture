@@ -5,14 +5,14 @@ from pathlib import Path
 from typing import cast
 
 from loguru import logger
-from PySide6.QtWidgets import QApplication, QFileDialog, QInputDialog
+from PySide6.QtWidgets import QApplication
 
 from .camera import CameraService
 from .config import app_logs_dir, load_config
 from .data import CaptureTableModel
 from .logging_setup import configure_logging
 from .storage import CaptureStorage
-from .ui import MainWindow
+from .ui import MainWindow, OutputRootDialog
 
 
 def build_application() -> QApplication:
@@ -28,27 +28,11 @@ def build_application() -> QApplication:
 
 
 def choose_output_root() -> Path | None:
-    selected_parent = QFileDialog.getExistingDirectory(
-        None,
-        "Select where to create the AutoCapture folder",
-        str(Path.home()),
-    )
-    if not selected_parent:
+    dialog = OutputRootDialog()
+    if dialog.exec() != OutputRootDialog.DialogCode.Accepted:
         return None
 
-    folder_name, accepted = QInputDialog.getText(
-        None,
-        "AutoCapture Folder Name",
-        "Enter the name of the folder to create:",
-    )
-    if not accepted:
-        return None
-
-    normalized_name = folder_name.strip()
-    if not normalized_name:
-        return None
-
-    return Path(selected_parent) / normalized_name
+    return dialog.output_root()
 
 
 def main() -> int:
